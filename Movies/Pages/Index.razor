@@ -1,0 +1,164 @@
+﻿@inject Movies.Interface.Imovies rep;
+
+@page "/"
+
+<div class="row">
+    <div class="col text-center">
+        <h1>Welcome to Movies!</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <h3>You can enter the name of some film and get information about it.</h3>
+    </div>
+</div>
+
+
+<p>
+    <input type="search" name="q" placeholder="Film Name" @bind="inputvalue">
+    <button class="btn btn-dark" @onclick="(() => GetValue(inputvalue))">Search</button>
+</p>
+
+<div>
+    @if (result != "")
+    {
+
+
+        @if (result.Contains('\n'))
+        {
+            SplitRes(result);
+            @if (fields.Count() > 2)
+            {
+                <img
+                     src=fields[6]
+                     height="200"
+                     width="150"
+                     align="right"
+                     />
+                <h1>@fields[0]@fields[9]</h1>
+                <p>
+                    <h2>About film:</h2>
+                    <table>
+                        <tr>
+                            <td>Rating:</td>
+                            <td>@fields[1]</td>
+                        </tr>
+                        <tr>
+                            <td>Runtime:</td>
+                            <td>@fields[7]</td>
+                        </tr>
+                        <tr>
+                            <td>Plot:</td>
+                            <td>@fields[8]</td>
+                        </tr>
+                        <tr>
+                            @if (fields[2] != "No information about Director.")
+                            {
+                                <td>Director:</td> <td><a href="" @onclick="(()=>GetDir(fields[2]))"> @fields[2]</a></td>
+                            }
+                            else
+                            {
+                                <td>Director:</td> <td>@fields[2]</td>
+                            }
+                        </tr>
+                        <tr>
+                            <td>Actor list:</td>
+                            <td>
+                                @foreach (var str in @fields[3].TrimEnd('_').Split("_"))
+                                {
+                                    <a href="" @onclick="(() => GetAct(str))">@str, </a>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td> Tag list:</td>
+                            <td>
+                                @foreach (var str in @fields[4].TrimEnd('_').Split("_"))
+                                {
+                                    <a href="" @onclick="(()=>GetTg(str))">@str, </a>
+                                }
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Similar movies:</td>
+                            
+                            <td>
+                                @foreach (var mv in @fields[5].TrimEnd(' ').Split(" "))
+                                {
+                                    <a href="" @onclick="(()=>GetFilm(GetFilmByCode(mv)))">@GetFilmByCode(mv), </a>
+                                }
+                            </td>
+                        </tr>
+
+                        
+                    </table>
+                </p>
+            }
+                    else
+                    {
+                        <ul>
+                            <li>Name: @fields[0]</li>
+                            <li>
+                                Movie List:
+                                <ul>
+                                    @foreach(var str in @fields[1].Trim('_').Split('_'))
+                                     {
+                                        <li><a href="" @onclick="() => GetFilm(str)">@str</a></li>
+                                     }
+                                </ul>
+                                
+                            </li>
+                        </ul>
+                    }
+        }
+
+        else
+        {
+            <p>@result</p>
+        }
+    }
+
+</div>
+
+
+
+@code{
+    private string? inputvalue;
+    private string result = "";
+    private string[] fields;
+    private void GetFilm(string str)
+    {
+        result = rep.GetMovie(str);
+    }
+    private void SplitRes(string res)
+    {
+        fields = res.Split('\n');
+    }
+    private void GetAct(string str)
+    {
+        result = rep.GetActor(str);
+    }
+    private void GetDir(string str)
+    {
+        result = rep.GetDirector(str);
+    }
+    private void GetTg(string str)
+    {
+        result = rep.GetTag(str);
+    }
+    private string GetFilmByCode(string str)
+    {
+        return rep.FilmByCode(str);
+    }
+
+    private void GetValue(string str)
+    {
+        var temp = rep.GetValue(inputvalue);
+        if (temp == "0") result = rep.GetMovie(str);
+        else if (temp == "1") result = rep.GetActor(str);
+        else if (temp == "2") result = rep.GetDirector(str);
+        else if (temp == "3") result = rep.GetTag(str);
+        else result = "Nothing found.";
+    }
+}
